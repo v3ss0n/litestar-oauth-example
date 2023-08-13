@@ -28,7 +28,9 @@ MOCK_DB: dict[str, User] = {}
 # Notes:
 # - 'User' can be any arbitrary value you decide upon.
 # - The callable can be either sync or async - both will work.
-async def retrieve_user_handler(token: "Token", connection: "ASGIConnection[Any, Any, Any, Any]") -> User | None:
+async def retrieve_user_handler(
+    token: "Token", connection: "ASGIConnection[Any, Any, Any, Any]"
+) -> User | None:
     # logic here to retrieve the user instance
     return MOCK_DB.get(token.sub)
 
@@ -36,6 +38,7 @@ async def retrieve_user_handler(token: "Token", connection: "ASGIConnection[Any,
 jwt_cookie_auth = JWTCookieAuth[User](
     retrieve_user_handler=retrieve_user_handler,
     token_secret=environ.get("JWT_SECRET", "abcd123"),
+    secure=False,
     # we are specifying which endpoints should be excluded from authentication. In this case the login endpoint
     # and our openAPI docs.
     exclude=["/login", "/schema"],
@@ -62,10 +65,7 @@ def some_route_handler(request: "Request[User, Token, Any]") -> Any:
 
 
 # We create our OpenAPIConfig as usual - the JWT security scheme will be injected into it.
-openapi_config = OpenAPIConfig(
-    title="My API",
-    version="1.0.0",
-)
+openapi_config = OpenAPIConfig(title="My API", version="1.0.0",)
 
 # We initialize the app instance and pass the jwt_cookie_auth 'on_app_init' handler to the constructor.
 # The hook handler will inject the JWT middleware and openapi configuration into the app.
